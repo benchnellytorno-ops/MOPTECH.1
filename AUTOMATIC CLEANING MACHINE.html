@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f4f6f3" />
+    <meta name="description" content="Explore the MopTech automatic floor-cleaning machine in an interactive 3D viewer." />
+    <title>MopTech | Automatic Floor Cleaner</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-f
+        ly: Inter, "Segoe UI", Arial, sans-serif;
+        color: #1d2925;
+        background: #f4f6f3;
+        font-synthesis: none;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        --muted: #69756f;
+        --green: #277861;
+        --line: rgba(39, 58, 49, 0.12);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html, body {
+        margin: 0;
+        height: 100%;
+        min-height: 100%;
+        background: #f4f6f3;
+        overflow: hidden;
+      }
+      #app {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        min-height: 0;
+        overflow: hidden;
+        isolation: isolate;
+        touch-action: none;
+        cursor: grab;
+      }
+      #app::after {
+        position: absolute;
+        z-index: 1;
+        inset: 0;
+        background:
+          radial-gradient(ellipse at 51% 49%, transparent 28%, rgba(26, 36, 32, 0.08) 100%),
+          linear-gradient(180deg, rgba(245,247,242,0.12), transparent 22%, transparent 78%, rgba(34,43,38,0.08));
+        content: "";
+        pointer-events: none;
+      }
+      #app canvas {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+      .topbar {
+        position: absolute;
+        z-index: 2;
+        top: 0;
+        left: 0;
+        display: flex;
+        width: 100%;
+        align-items: center;
+        justify-content: space-between;
+        padding: 17px 4.5%;
+        border-bottom: 1px solid rgba(39,58,49,0.08);
+        background: linear-gradient(180deg, rgba(248,249,246,0.97), rgba(248,249,246,0.82));
+        backdrop-filter: blur(14px);
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: #1d2925;
+        font-size: 14px;
+        font-weight: 750;
+        letter-spacing: 0.15em;
+      }
+      .brand-mark {
+        display: grid;
+        width: 34px;
+        height: 34px;
+        place-items: center;
+        border-radius: 12px;
+        background: #277861;
+        color: #fff;
+        font-size: 12px;
+        letter-spacing: 0;
+        box-shadow: 0 5px 14px rgba(39,120,97,0.22);
+      }
+      .preview-tag, .eyebrow {
+        color: var(--green);
+        font-size: 10px;
+        font-weight: 750;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+      .preview-tag {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        color: var(--muted);
+      }
+      .preview-tag span {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .preview-tag[data-rotating="false"]::before {
+        background: #d99a43;
+        box-shadow: 0 0 0 4px rgba(217,154,67,0.13);
+      }
+      .preview-tag::before {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #4da783;
+        box-shadow: 0 0 0 4px rgba(77,167,131,0.12);
+        content: "";
+      }
+      .view-label {
+        position: absolute;
+        z-index: 2;
+        top: 91px;
+        left: 50%;
+        padding: 9px 15px;
+        border: 1px solid rgba(39, 58, 49, 0.12);
+        border-radius: 999px;
+        background: rgba(248,250,247,0.88);
+        box-shadow: 0 6px 20px rgba(31,48,40,0.06);
+        color: #34433d;
+        font-size: 11px;
+        font-weight: 750;
+        letter-spacing: 0.12em;
+        pointer-events: none;
+        transform: translateX(-50%);
+      }
+      .viewer-note {
+        position: absolute;
+        z-index: 2;
+        left: 50%;
+        bottom: 28px;
+        padding: 10px 16px;
+        border: 1px solid rgba(39,58,49,0.1);
+        border-radius: 999px;
+        background: rgba(250,251,248,0.88);
+        box-shadow: 0 8px 22px rgba(37,50,44,0.08);
+        backdrop-filter: blur(12px);
+        max-width: calc(100% - 36px);
+        color: var(--muted);
+        font-size: 11px;
+        letter-spacing: 0.03em;
+        text-align: center;
+        transform: translateX(-50%);
+      }
+      .viewer-note strong {
+        color: #34433d;
+      }
+      .wheel-joystick {
+        position: absolute;
+        z-index: 4;
+        left: 4.5%;
+        bottom: 24px;
+        display: grid;
+        justify-items: center;
+        gap: 8px;
+        color: #34433d;
+        font-size: 10px;
+        font-weight: 750;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        touch-action: none;
+        user-select: none;
+      }
+      .joystick-base {
+        position: relative;
+        display: grid;
+        width: 112px;
+        height: 112px;
+        place-items: center;
+        border: 1px solid rgba(255,255,255,0.72);
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(221,231,224,0.84), rgba(245,248,244,0.76));
+        box-shadow: 0 10px 28px rgba(35,53,44,0.18), inset 0 2px 8px rgba(255,255,255,0.9);
+        touch-action: none;
+        cursor: grab;
+      }
+      .joystick-base:active { cursor: grabbing; }
+      .joystick-knob {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 48px;
+        height: 48px;
+        border: 1px solid rgba(255,255,255,0.8);
+        border-radius: 50%;
+        background: linear-gradient(145deg, #409b7b, #21694f);
+        box-shadow: 0 5px 12px rgba(30,94,68,0.3), inset 0 2px 3px rgba(255,255,255,0.3);
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+      }
+      .joystick-base::before, .joystick-base::after {
+        position: absolute;
+        color: rgba(52,67,61,0.65);
+        font-size: 10px;
+        line-height: 1;
+        pointer-events: none;
+      }
+      .joystick-base::before { content: "▲"; top: 10px; }
+      .joystick-base::after { content: "▼"; bottom: 10px; }
+      .splash-button {
+        position: absolute;
+        z-index: 3;
+        right: 4.5%;
+        bottom: 26px;
+        display: inline-flex;
+        min-height: 48px;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+        padding: 0 18px;
+        border: 1px solid rgba(255,255,255,0.65);
+        border-radius: 15px;
+        background: linear-gradient(135deg, #1688a8, #176d88);
+        box-shadow: 0 10px 26px rgba(17,92,115,0.25);
+        color: #fff;
+        font: inherit;
+        font-size: 12px;
+        font-weight: 750;
+        cursor: pointer;
+        transition: transform 150ms ease, box-shadow 150ms ease, filter 150ms ease;
+      }
+      .splash-button:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 13px 30px rgba(17,92,115,0.32);
+        filter: brightness(1.06);
+      }
+      .splash-button:focus-visible {
+        outline: 3px solid rgba(39,120,97,0.36);
+        outline-offset: 3px;
+      }
+      .splash-button:disabled {
+        cursor: wait;
+        opacity: 0.85;
+      }
+      .splash-icon {
+        font-size: 18px;
+        line-height: 1;
+      }
+      .touch-hint {
+        display: none;
+      }
+      @media (max-width: 760px) {
+        #app {
+          min-height: 0;
+        }
+        .topbar {
+          padding: 17px 20px;
+        }
+        .view-label {
+          top: 79px;
+          padding: 7px 9px;
+          font-size: 9px;
+        }
+        .viewer-note {
+          left: 50%;
+          bottom: 12px;
+          max-width: calc(100% - 28px);
+          font-size: 9px;
+          transform: translateX(-50%);
+        }
+        .wheel-joystick {
+          left: 14px;
+          bottom: 58px;
+          gap: 6px;
+          font-size: 9px;
+        }
+        .joystick-base {
+          width: 94px;
+          height: 94px;
+        }
+        .joystick-knob {
+          width: 42px;
+          height: 42px;
+        }
+        .splash-button {
+          right: 14px;
+          bottom: 58px;
+          min-height: 42px;
+          padding: 0 13px;
+          border-radius: 13px;
+          font-size: 11px;
+        }
+        .desktop-hint {
+          display: none;
+        }
+        .touch-hint {
+          display: inline;
+        }
+      }
+      @media (max-width: 420px) {
+        .preview-tag {
+          font-size: 8px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+          scroll-behavior: auto !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <header class="topbar">
+        <div class="brand"><span class="brand-mark">MT</span> MopTech</div>
+        <div class="preview-tag" id="rotation-status" role="status" aria-live="polite" data-rotating="true">Auto orbit · Space to pause</div>
+      </header>
+      <div class="view-label" aria-hidden="true">LIVE 3D MODEL</div>
+      <div class="wheel-joystick" aria-label="Wheel movement control">
+        <span>Drive</span>
+        <div class="joystick-base" id="wheel-joystick" role="application" aria-label="Drag joystick to steer the machine" tabindex="0">
+          <div class="joystick-knob" id="joystick-knob"></div>
+        </div>
+      </div>
+      <div class="viewer-note"><strong>Explore the model</strong> <span class="desktop-hint">Drag to orbit · Right/Shift-drag to pan · Scroll to zoom · Space to pause</span><span class="touch-hint">Drag to orbit · Pinch to zoom · Shift-drag to pan</span></div>
+      <button class="splash-button" id="splash-water" type="button" aria-label="Splash water from the mop">
+        <span class="splash-icon" aria-hidden="true">💧</span>
+        <span>Splash water</span>
+      </button>
+    </div>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+        }
+      }
+    </script>
+    <script type="module">
+      import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+
+      const container = document.getElementById('app');
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0xd5d6d1);
+      scene.fog = new THREE.Fog(0xd5d6d1, 34, 72);
+
+      const initialViewTarget = new THREE.Vector3(3.25, 1.25, 0);
+      const viewTarget = initialViewTarget.clone();
+      const initialViewDistance = 11.8;
+      let cameraFitDistance = initialViewDistance;
+      let zoomFactor = 1;
+      let viewDistance = cameraFitDistance;
+      let targetViewDistance = cameraFitDistance;
+      let viewTheta = 0.22;
+      let viewPhi = 0.92;
+      const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 1000);
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(container.clientWidth, container.clientHeight);
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.12;
+      container.appendChild(renderer.domElement);
+
+      function updateCamera() {
+        const offset = new THREE.Vector3().setFromSphericalCoords(viewDistance, viewPhi, viewTheta);
+        camera.position.copy(viewTarget).add(offset);
+        camera.lookAt(viewTarget);
+      }
+      updateCamera();
+
+      const ambient = new THREE.HemisphereLight(0xf5fbff, 0x64685f, 1.45);
+      scene.add(ambient);
+
+      const dirLight = new THREE.DirectionalLight(0xfff3d9, 2.3);
+      dirLight.position.set(8, 12, 6);
+      dirLight.castShadow = true;
+      dirLight.shadow.mapSize.set(2048, 2048);
+      dirLight.shadow.camera.left = -20;
+      dirLight.shadow.camera.right = 20;
+      dirLight.shadow.camera.top = 20;
+      dirLight.shadow.camera.bottom = -20;
+      scene.add(dirLight);
+      const fillLight = new THREE.DirectionalLight(0xc8e2ee, 0.75);
+      fillLight.position.set(-8, 7, -5);
+      scene.add(fillLight);
+
+      const concreteCanvas = document.createElement('canvas');
+      concreteCanvas.width = 128;
+      concreteCanvas.height = 128;
+      const concreteContext = concreteCanvas.getContext('2d');
+      concreteContext.fillStyle = '#b1aea8';
+      concreteContext.fillRect(0, 0, 128, 128);
+      for (let i = 0; i < 6500; i++) {
+        const shade = Math.random() < 0.52 ? '65, 63, 60' : '244, 242, 237';
+        concreteContext.fillStyle = `rgba(${shade}, ${Math.random() * 0.09})`;
+        const size = Math.random() * 2.2 + 0.4;
+        concreteContext.fillRect(Math.random() * 128, Math.random() * 128, size, size);
+      }
+      const concreteTexture = new THREE.CanvasTexture(concreteCanvas);
+      concreteTexture.wrapS = THREE.RepeatWrapping;
+      concreteTexture.wrapT = THREE.RepeatWrapping;
+      concreteTexture.repeat.set(45, 45);
+      concreteTexture.colorSpace = THREE.SRGBColorSpace;
+
+      const floor = new THREE.Mesh(
+        new THREE.PlaneGeometry(200, 200),
+        new THREE.MeshStandardMaterial({ map: concreteTexture, color: 0xffffff, roughness: 0.96, metalness: 0 })
+      );
+      floor.rotation.x = -Math.PI / 2;
+      floor.position.y = -0.02;
+      floor.receiveShadow = true;
+      scene.add(floor);
+
+      function makeWheel(color = 0xf2cf00, radius = 0.58) {
+        const group = new THREE.Group();
+        const blackRubber = new THREE.MeshStandardMaterial({ color: 0x17191a, roughness: 0.88 });
+        const yellow = new THREE.MeshStandardMaterial({ color, roughness: 0.48, metalness: 0.12 });
+        const darkHub = new THREE.MeshStandardMaterial({ color: 0x292b2b, roughness: 0.55, metalness: 0.25 });
+        const treadMaterial = new THREE.MeshStandardMaterial({ color: 0x232626, roughness: 0.94 });
+        const tire = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, 0.34, 40), blackRubber);
+        tire.rotation.x = Math.PI / 2;
+        tire.castShadow = true;
+        tire.receiveShadow = true;
+        group.add(tire);
+
+        for (let i = 0; i < 24; i++) {
+          const angle = (i / 24) * Math.PI * 2;
+          const tread = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.075, 0.29), treadMaterial);
+          tread.position.set(Math.cos(angle) * (radius + 0.012), Math.sin(angle) * (radius + 0.012), 0);
+          tread.rotation.z = angle;
+          tread.castShadow = true;
+          group.add(tread);
+        }
+
+        for (const side of [-1, 1]) {
+          const rim = new THREE.Mesh(new THREE.CylinderGeometry(radius * 0.73, radius * 0.73, 0.36, 32), yellow);
+          rim.rotation.x = Math.PI / 2;
+          rim.position.z = side * 0.015;
+          group.add(rim);
+
+          const sidewall = new THREE.Mesh(
+            new THREE.TorusGeometry(radius * 0.84, 0.018, 8, 40),
+            new THREE.MeshStandardMaterial({ color: 0x303333, roughness: 0.86 })
+          );
+          sidewall.position.z = side * 0.177;
+          group.add(sidewall);
+
+          const hub = new THREE.Mesh(new THREE.CylinderGeometry(radius * 0.25, radius * 0.25, 0.38, 24), darkHub);
+          hub.rotation.x = Math.PI / 2;
+          hub.position.z = side * 0.025;
+          group.add(hub);
+
+          for (let i = 0; i < 8; i++) {
+            const angle = (Math.PI / 4) * i;
+            const spoke = new THREE.Mesh(new THREE.BoxGeometry(0.075, radius * 0.82, 0.025), yellow);
+            spoke.position.set(Math.cos(angle) * radius * 0.36, Math.sin(angle) * radius * 0.36, side * 0.205);
+            spoke.rotation.z = angle;
+            group.add(spoke);
+          }
+        }
+        return group;
+      }
+
+      function makeBoGearMotor(inward) {
+        const group = new THREE.Group();
+        const gearboxMaterial = new THREE.MeshStandardMaterial({ color: 0xf3ca18, roughness: 0.56 });
+        const gearboxAccent = new THREE.MeshStandardMaterial({ color: 0xdcae0b, roughness: 0.62 });
+        const motorMetal = new THREE.MeshStandardMaterial({ color: 0x9ba2a3, roughness: 0.38, metalness: 0.68 });
+        const darkMetal = new THREE.MeshStandardMaterial({ color: 0x3b4244, roughness: 0.48, metalness: 0.55 });
+
+        const gearbox = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.32, 0.36), gearboxMaterial);
+        gearbox.position.y = -0.16;
+        gearbox.castShadow = true;
+        group.add(gearbox);
+
+        const gearboxCover = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.12, 0.375), gearboxAccent);
+        gearboxCover.position.set(-0.025, 0.06, 0);
+        group.add(gearboxCover);
+
+        for (const x of [-0.14, 0.14]) {
+          const fastener = new THREE.Mesh(new THREE.SphereGeometry(0.022, 10, 8), darkMetal);
+          fastener.position.set(x, 0.13, 0);
+          group.add(fastener);
+        }
+
+        const motorCan = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.62, 20), motorMetal);
+        motorCan.rotation.z = Math.PI / 2;
+        motorCan.position.set(inward * 0.47, -0.16, 0);
+        motorCan.castShadow = true;
+        group.add(motorCan);
+
+        const motorEndCap = new THREE.Mesh(new THREE.CylinderGeometry(0.132, 0.132, 0.045, 20), darkMetal);
+        motorEndCap.rotation.z = Math.PI / 2;
+        motorEndCap.position.set(inward * 0.79, -0.16, 0);
+        group.add(motorEndCap);
+
+        const outputFlange = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.055, 20), gearboxAccent);
+        outputFlange.position.set(0, -0.35, 0);
+        group.add(outputFlange);
+
+        const outputShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.065, 0.32, 16), darkMetal);
+        outputShaft.scale.y = 0.5;
+        outputShaft.position.set(0, -0.44, 0);
+        group.add(outputShaft);
+        return group;
+      }
+
+      function addMopHead(x, y, z) {
+        const group = new THREE.Group();
+        group.position.set(x, y, z);
+
+        const blackBacking = new THREE.Mesh(
+          new THREE.CylinderGeometry(1.12, 1.12, 0.16, 64),
+          new THREE.MeshStandardMaterial({ color: 0x202329, roughness: 0.58, metalness: 0.3 })
+        );
+        blackBacking.position.y = 0.43;
+        blackBacking.castShadow = true;
+        group.add(blackBacking);
+
+        const reflectivePlate = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.82, 0.82, 0.025, 64),
+          new THREE.MeshStandardMaterial({ color: 0x367c9b, roughness: 0.24, metalness: 0.72 })
+        );
+        reflectivePlate.position.y = 0.525;
+        group.add(reflectivePlate);
+
+        const centerPlate = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.52, 0.52, 0.04, 48),
+          new THREE.MeshStandardMaterial({ color: 0xe8edf0, roughness: 0.38, metalness: 0.38 })
+        );
+        centerPlate.position.y = 0.56;
+        group.add(centerPlate);
+
+        const fringeMaterial = new THREE.MeshStandardMaterial({ color: 0xf4f3ee, roughness: 1 });
+        for (let i = 0; i < 40; i++) {
+          const angle = (i / 40) * Math.PI * 2;
+          const strand = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.07, 0.58, 6), fringeMaterial);
+          strand.position.set(Math.cos(angle) * 1.08, 0.27, Math.sin(angle) * 1.08);
+          strand.rotation.z = Math.cos(angle) * 0.1;
+          strand.rotation.x = Math.sin(angle) * 0.1;
+          strand.castShadow = true;
+          group.add(strand);
+        }
+
+        const centerHub = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.24, 0.3, 0.38, 32),
+          new THREE.MeshStandardMaterial({ color: 0xf5f5f0, roughness: 0.5, metalness: 0.12 })
+        );
+        centerHub.position.y = 0.72;
+        group.add(centerHub);
+
+        for (let i = 0; i < 20; i++) {
+          const angle = (i / 20) * Math.PI * 2;
+          const fastener = new THREE.Mesh(
+            new THREE.SphereGeometry(0.055, 8, 8),
+            new THREE.MeshStandardMaterial({ color: 0xf6f5ec, roughness: 0.72 })
+          );
+          fastener.position.set(Math.cos(angle) * 0.99, 0.53, Math.sin(angle) * 0.99);
+          group.add(fastener);
+        }
+
+        return group;
+      }
+
+      const cart = new THREE.Group();
+      cart.position.x = 3;
+      scene.add(cart);
+
+      const base = new THREE.Mesh(
+        new THREE.BoxGeometry(5.2, 0.24, 2.15),
+        new THREE.MeshStandardMaterial({ color: 0xe6e8e9, roughness: 0.82, metalness: 0.04 })
+      );
+      base.position.set(0.75, 1.02, 0);
+      base.castShadow = true;
+      base.receiveShadow = true;
+      cart.add(base);
+
+      const frameRails = new THREE.Mesh(
+        new THREE.BoxGeometry(4.7, 0.12, 0.12),
+        new THREE.MeshStandardMaterial({ color: 0xbfc4c5, roughness: 0.7, metalness: 0.15 })
+      );
+      for (const side of [-1, 1]) {
+        const rail = frameRails.clone();
+        rail.position.set(0.75, 0.82, side * 0.83);
+        cart.add(rail);
+      }
+
+      const timberMaterial = new THREE.MeshStandardMaterial({ color: 0x9c7048, roughness: 0.92 });
+      const plank = new THREE.Mesh(
+        new THREE.BoxGeometry(6, 0.34, 0.68),
+        timberMaterial
+      );
+      plank.position.set(-0.55, 1.68, 0);
+      plank.rotation.z = -0.06;
+      plank.castShadow = true;
+      cart.add(plank);
+
+      const woodSupport = new THREE.Mesh(new THREE.BoxGeometry(4, 0.16, 0.44), timberMaterial);
+      woodSupport.position.set(-1.1, 1.42, 0);
+      woodSupport.castShadow = true;
+      cart.add(woodSupport);
+
+      const mopCenterX = -3.48;
+      addTube([
+        [2.82, 2.07, -0.13],
+        [3.08, 2.04, -0.12],
+        [3.2, 1.91, 0.02],
+        [3.12, 1.8, 0.3],
+        [2.82, 1.76, 0.38],
+        [1.7, 1.79, 0.38],
+        [0.35, 1.8, 0.34],
+        [-1.2, 1.77, 0.32],
+        [-2.48, 1.7, 0.29],
+        [mopCenterX + 0.68, 1.42, 0.2],
+        [mopCenterX + 0.62, 0.62, 0.12]
+      ], 0x279bd0, 0.04);
+      const mopWaterNozzle = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.055, 0.04, 0.16, 12),
+        new THREE.MeshStandardMaterial({ color: 0x287fa2, roughness: 0.38, metalness: 0.18 })
+      );
+      mopWaterNozzle.position.set(mopCenterX + 0.62, 0.55, 0.12);
+      cart.add(mopWaterNozzle);
+
+      const mopMotor = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.38, 0.42, 0.72, 32),
+        new THREE.MeshStandardMaterial({ color: 0xe8d400, roughness: 0.48, metalness: 0.14 })
+      );
+      mopMotor.position.set(mopCenterX, 2.24, 0);
+      mopMotor.castShadow = true;
+      cart.add(mopMotor);
+
+      const mopMotorMount = new THREE.Mesh(
+        new THREE.BoxGeometry(0.62, 0.52, 0.58),
+        new THREE.MeshStandardMaterial({ color: 0x765335, roughness: 0.88 })
+      );
+      mopMotorMount.position.set(mopCenterX, 1.69, 0);
+      mopMotorMount.castShadow = true;
+      cart.add(mopMotorMount);
+
+      const motorTop = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.32, 0.32, 0.12, 32),
+        new THREE.MeshStandardMaterial({ color: 0x5e6060, roughness: 0.55, metalness: 0.3 })
+      );
+      motorTop.position.set(mopCenterX, 2.66, 0);
+      cart.add(motorTop);
+
+      const driveShaft = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.12, 0.12, 1.1, 20),
+        new THREE.MeshStandardMaterial({ color: 0xd8dcdd, roughness: 0.4, metalness: 0.45 })
+      );
+      driveShaft.position.set(mopCenterX, 1.37, 0);
+      driveShaft.castShadow = true;
+      cart.add(driveShaft);
+
+      const batteryBox = new THREE.Mesh(
+        new THREE.BoxGeometry(1.3, 0.43, 0.82),
+        new THREE.MeshStandardMaterial({ color: 0x55595c, roughness: 0.62, metalness: 0.25 })
+      );
+      batteryBox.position.set(2.45, 1.48, 0.42);
+      batteryBox.castShadow = true;
+      cart.add(batteryBox);
+
+      const tank = new THREE.Group();
+      const tankBody = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.48, 0.52, 1.22, 40),
+        new THREE.MeshPhysicalMaterial({ color: 0xd7f2fb, roughness: 0.2, metalness: 0.02, transparent: true, opacity: 0.42, transmission: 0.48, thickness: 0.12, clearcoat: 0.7, clearcoatRoughness: 0.16 })
+      );
+      tankBody.castShadow = true;
+      tank.add(tankBody);
+
+      const water = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.405, 0.44, 0.64, 36),
+        new THREE.MeshStandardMaterial({ color: 0x70bce0, roughness: 0.24, transparent: true, opacity: 0.68 })
+      );
+      water.position.y = -0.2;
+      tank.add(water);
+
+      const waterline = new THREE.Mesh(
+        new THREE.TorusGeometry(0.445, 0.012, 8, 40),
+        new THREE.MeshStandardMaterial({ color: 0x78c5e1, roughness: 0.3, transparent: true, opacity: 0.8 })
+      );
+      waterline.rotation.x = Math.PI / 2;
+      waterline.position.y = -0.08;
+      tank.add(waterline);
+
+      const lowerTankRim = new THREE.Mesh(
+        new THREE.TorusGeometry(0.49, 0.025, 8, 40),
+        new THREE.MeshStandardMaterial({ color: 0xa9cbd5, roughness: 0.38, metalness: 0.12 })
+      );
+      lowerTankRim.rotation.x = Math.PI / 2;
+      lowerTankRim.position.y = -0.59;
+      tank.add(lowerTankRim);
+
+      const submersiblePump = new THREE.Group();
+      const pumpMotorBody = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.12, 0.14, 0.34, 20),
+        new THREE.MeshStandardMaterial({ color: 0x394b50, roughness: 0.56, metalness: 0.32 })
+      );
+      pumpMotorBody.position.y = -0.31;
+      submersiblePump.add(pumpMotorBody);
+
+      const pumpEndCap = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.15, 0.15, 0.06, 20),
+        new THREE.MeshStandardMaterial({ color: 0x242c2f, roughness: 0.48, metalness: 0.42 })
+      );
+      pumpEndCap.position.y = -0.49;
+      submersiblePump.add(pumpEndCap);
+
+      const pumpOutlet = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.045, 0.045, 0.14, 12),
+        new THREE.MeshStandardMaterial({ color: 0x39869b, roughness: 0.38, metalness: 0.14 })
+      );
+      pumpOutlet.position.set(0.13, -0.11, 0);
+      pumpOutlet.rotation.z = -Math.PI / 2;
+      submersiblePump.add(pumpOutlet);
+
+      const pumpBand = new THREE.Mesh(
+        new THREE.TorusGeometry(0.128, 0.012, 6, 24),
+        new THREE.MeshStandardMaterial({ color: 0xb4c4c4, roughness: 0.42, metalness: 0.5 })
+      );
+      pumpBand.rotation.x = Math.PI / 2;
+      pumpBand.position.y = -0.29;
+      submersiblePump.add(pumpBand);
+      tank.add(submersiblePump);
+
+      const cap = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.54, 0.54, 0.15, 40),
+        new THREE.MeshStandardMaterial({ color: 0xf2d000, roughness: 0.42, metalness: 0.08 })
+      );
+      cap.position.y = 0.66;
+      tank.add(cap);
+
+      const capRim = new THREE.Mesh(
+        new THREE.TorusGeometry(0.36, 0.035, 10, 32),
+        new THREE.MeshStandardMaterial({ color: 0xe6bd00, roughness: 0.45 })
+      );
+      capRim.rotation.x = Math.PI / 2;
+      capRim.position.y = 0.75;
+      tank.add(capRim);
+
+      const fillNeck = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.07, 0.07, 0.16, 16),
+        new THREE.MeshStandardMaterial({ color: 0x4b8eb5, roughness: 0.42 })
+      );
+      fillNeck.position.set(-0.2, 0.77, 0.12);
+      tank.add(fillNeck);
+
+      tank.position.set(2.62, 2.18, -0.13);
+      cart.add(tank);
+
+      const pump = new THREE.Mesh(
+        new THREE.BoxGeometry(0.84, 0.42, 0.64),
+        new THREE.MeshStandardMaterial({ color: 0xe8ebeb, roughness: 0.5, metalness: 0.22 })
+      );
+      pump.position.set(3.18, 1.52, 0.42);
+      pump.castShadow = true;
+      cart.add(pump);
+
+      const pumpBase = new THREE.Mesh(
+        new THREE.BoxGeometry(0.92, 0.09, 0.7),
+        new THREE.MeshStandardMaterial({ color: 0x34383a, roughness: 0.55, metalness: 0.3 })
+      );
+      pumpBase.position.set(3.18, 1.27, 0.42);
+      cart.add(pumpBase);
+
+      const pumpConnector = new THREE.Mesh(
+        new THREE.BoxGeometry(0.24, 0.12, 0.25),
+        new THREE.MeshStandardMaterial({ color: 0x23282a, roughness: 0.5, metalness: 0.25 })
+      );
+      pumpConnector.position.set(3.17, 1.78, 0.42);
+      cart.add(pumpConnector);
+
+      function addTube(points, color, radius = 0.045) {
+        const curve = new THREE.CatmullRomCurve3(points.map(point => new THREE.Vector3(...point)));
+        const tube = new THREE.Mesh(
+          new THREE.TubeGeometry(curve, 32, radius, 8, false),
+          new THREE.MeshStandardMaterial({ color, roughness: 0.32, metalness: 0.12 })
+        );
+        tube.castShadow = true;
+        cart.add(tube);
+      }
+
+      addTube([[3.15, 1.8, 0.36], [2.65, 1.94, 0.38], [2.55, 2.16, 0.35], [2.48, 2.48, 0.24]], 0x298bd3, 0.045);
+      addTube([[2.82, 1.84, 0.36], [2.2, 1.9, 0.34], [1.2, 1.86, 0.28], [0.2, 1.83, 0.2], [-1.9, 1.9, 0.08], [-2.35, 2.1, 0]], 0x2676bc, 0.042);
+      addTube([[2.92, 1.82, 0.54], [2.2, 1.8, 0.67], [1.2, 1.82, 0.65], [0.1, 1.84, 0.62], [-1.9, 1.96, 0.16], [-2.34, 2.1, 0.06]], 0x9b563a, 0.03);
+      addTube([[3.45, 1.65, 0.67], [3.8, 1.58, 0.86], [4.2, 1.78, 0.86], [4.35, 2.05, 0.7], [3.08, 2.2, 0.3]], 0x343a3d, 0.035);
+      addTube([[2.95, 1.76, 0.7], [2.35, 1.98, 0.92], [1.65, 2.1, 0.98], [1.2, 1.95, 0.88], [0.7, 1.8, 0.72]], 0x2676bc, 0.035);
+      addTube([[2.75, 1.88, -0.12], [2.82, 2.05, -0.02], [2.98, 2.48, 0.02], [2.94, 2.83, 0.08], [2.72, 2.88, 0.2], [2.35, 2.52, 0.42], [2.28, 1.82, 0.47], [2.42, 1.63, 0.42]], 0xb52f27, 0.018);
+      addTube([[2.69, 1.88, -0.16], [2.7, 2.08, -0.12], [2.78, 2.53, -0.08], [2.72, 2.86, -0.02], [2.48, 2.9, 0.08], [2.18, 2.51, 0.34], [2.14, 1.82, 0.4], [2.33, 1.62, 0.4]], 0x272c2d, 0.018);
+
+      const wheelPositions = [
+        [-1.15, 0.58, 1.16],
+        [-1.15, 0.58, -1.16],
+        [2.58, 0.58, 1.16],
+        [2.58, 0.58, -1.16]
+      ];
+      const wheels = wheelPositions.map(([x, y, z]) => {
+        const wheel = makeWheel();
+        wheel.position.set(x, y, z);
+        cart.add(wheel);
+        const gearMotor = makeBoGearMotor(x < 0 ? 1 : -1);
+        gearMotor.position.set(x, 0.72, Math.sign(z) * 0.55);
+        cart.add(gearMotor);
+        return wheel;
+      });
+
+      const mopHead = addMopHead(mopCenterX, 0, 0);
+      cart.add(mopHead);
+
+      const splashCount = 44;
+      const splashPositions = new Float32Array(splashCount * 3);
+      const splashGeometry = new THREE.BufferGeometry();
+      splashGeometry.setAttribute('position', new THREE.BufferAttribute(splashPositions, 3));
+      const splashMaterial = new THREE.PointsMaterial({
+        color: 0x8ce4f5,
+        size: 0.12,
+        transparent: true,
+        opacity: 0.92,
+        depthWrite: false,
+        sizeAttenuation: true
+      });
+      const splashParticles = new THREE.Points(splashGeometry, splashMaterial);
+      splashParticles.visible = false;
+      splashParticles.renderOrder = 2;
+      scene.add(splashParticles);
+      const splashVelocity = Array.from({ length: splashCount }, () => new THREE.Vector3());
+      const splashOrigin = new THREE.Vector3();
+      const splashDuration = 1.35;
+      let splashStartedAt = -Infinity;
+      const splashButton = document.getElementById('splash-water');
+      const splashRing = new THREE.Mesh(
+        new THREE.TorusGeometry(0.5, 0.035, 8, 40),
+        new THREE.MeshBasicMaterial({ color: 0x69d6ed, transparent: true, opacity: 0.75, depthWrite: false })
+      );
+      splashRing.rotation.x = -Math.PI / 2;
+      splashRing.position.set(cart.position.x + mopCenterX, 0.025, 0);
+      splashRing.scale.setScalar(0.2);
+      splashRing.visible = false;
+      scene.add(splashRing);
+
+      function startWaterSplash() {
+        pauseForInteraction();
+        cart.localToWorld(splashOrigin.set(mopCenterX + 0.35, 0.48, 0));
+        const position = splashGeometry.attributes.position;
+        for (let i = 0; i < splashCount; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = 0.45 + Math.random() * 1.05;
+          splashVelocity[i].set(
+            Math.cos(angle) * speed,
+            0.5 + Math.random() * 1.2,
+            Math.sin(angle) * speed
+          );
+          position.setXYZ(i, splashOrigin.x, splashOrigin.y, splashOrigin.z);
+        }
+        position.needsUpdate = true;
+        splashParticles.visible = true;
+        splashRing.visible = true;
+        splashStartedAt = performance.now() * 0.001;
+        splashButton.disabled = true;
+        splashButton.querySelector('span:last-child').textContent = 'Splashing...';
+        window.setTimeout(() => {
+          splashButton.disabled = false;
+          splashButton.querySelector('span:last-child').textContent = 'Splash water';
+        }, splashDuration * 1000);
+      }
+      splashButton.addEventListener('pointerdown', event => event.stopPropagation());
+      splashButton.addEventListener('click', startWaterSplash);
+
+      let isDragging = false;
+      let previousPointer = null;
+      let previousGesture = null;
+      const activePointers = new Map();
+      let autoRotate = true;
+      let rotationResumeTimer;
+      const rotationStatus = document.getElementById('rotation-status');
+      function setAutoRotate(enabled) {
+        autoRotate = enabled;
+        rotationStatus.dataset.rotating = String(enabled);
+        rotationStatus.textContent = enabled ? 'Auto orbit · Space to pause' : 'Orbit paused · Space to resume';
+      }
+      function pauseForInteraction() {
+        window.clearTimeout(rotationResumeTimer);
+        setAutoRotate(false);
+        rotationResumeTimer = window.setTimeout(() => setAutoRotate(true), 4500);
+      }
+      const panStep = () => viewDistance * 0.12;
+      const zoomBy = factor => {
+        zoomFactor = THREE.MathUtils.clamp(zoomFactor * factor, 0.45, 3);
+        targetViewDistance = cameraFitDistance * zoomFactor;
+      };
+      const zoom = direction =>       zoomBy(direction === 'in' ? 0.95 : 1.05);
+      const pan = direction => {
+        pauseForInteraction();
+        const step = panStep();
+        camera.updateMatrixWorld();
+        const right = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 0);
+        const up = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 1);
+        if (direction === 'left') viewTarget.addScaledVector(right, -step);
+        if (direction === 'right') viewTarget.addScaledVector(right, step);
+        if (direction === 'up') viewTarget.addScaledVector(up, step);
+        if (direction === 'down') viewTarget.addScaledVector(up, -step);
+        if (direction === 'reset') {
+          viewTarget.copy(initialViewTarget);
+          zoomFactor = 1;
+          targetViewDistance = cameraFitDistance;
+          viewTheta = 0.22;
+          viewPhi = 0.92;
+        }
+        updateCamera();
+      };
+
+      window.addEventListener('keydown', event => {
+        const directions = {
+          ArrowLeft: 'left',
+          ArrowRight: 'right',
+          ArrowUp: 'up',
+          ArrowDown: 'down'
+        };
+        if (directions[event.key]) {
+          event.preventDefault();
+          pan(directions[event.key]);
+        } else if (event.key === '+' || event.key === '=') {
+          event.preventDefault();
+          pauseForInteraction();
+          zoom('in');
+        } else if (event.key === '-') {
+          event.preventDefault();
+          pauseForInteraction();
+          zoom('out');
+        } else if (event.key === 'Home') {
+          event.preventDefault();
+          pan('reset');
+        } else if (event.code === 'Space') {
+          event.preventDefault();
+          window.clearTimeout(rotationResumeTimer);
+          setAutoRotate(!autoRotate);
+        }
+      });
+
+      const joystickInput = { x: 0, y: 0 };
+      const joystickBase = document.getElementById('wheel-joystick');
+      const joystickKnob = document.getElementById('joystick-knob');
+      let joystickPointerId = null;
+      let joystickRadius = joystickBase.getBoundingClientRect().width * 0.32;
+      let joystickStart = { x: 0, y: 0 };
+      function updateJoystick(event) {
+        const dx = event.clientX - joystickStart.x;
+        const dy = event.clientY - joystickStart.y;
+        const length = Math.hypot(dx, dy);
+        const scale = length > joystickRadius ? joystickRadius / length : 1;
+        const knobX = dx * scale;
+        const knobY = dy * scale;
+        joystickInput.x = knobX / joystickRadius;
+        joystickInput.y = -knobY / joystickRadius;
+        joystickKnob.style.transform = `translate(calc(-50% + ${knobX}px), calc(-50% + ${knobY}px))`;
+      }
+      function resetJoystick() {
+        joystickPointerId = null;
+        joystickInput.x = 0;
+        joystickInput.y = 0;
+        joystickKnob.style.transform = 'translate(-50%, -50%)';
+      }
+      joystickBase.addEventListener('pointerdown', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (joystickPointerId !== null) return;
+        joystickPointerId = event.pointerId;
+        joystickStart = { x: event.clientX, y: event.clientY };
+        joystickBase.setPointerCapture(event.pointerId);
+        window.clearTimeout(rotationResumeTimer);
+        setAutoRotate(false);
+        updateJoystick(event);
+      });
+      joystickBase.addEventListener('pointermove', event => {
+        event.stopPropagation();
+        if (event.pointerId === joystickPointerId) updateJoystick(event);
+      });
+      joystickBase.addEventListener('pointerup', event => {
+        event.stopPropagation();
+        if (event.pointerId !== joystickPointerId) return;
+        if (joystickBase.hasPointerCapture(event.pointerId)) joystickBase.releasePointerCapture(event.pointerId);
+        resetJoystick();
+        pauseForInteraction();
+      });
+      joystickBase.addEventListener('pointercancel', event => {
+        event.stopPropagation();
+        if (event.pointerId === joystickPointerId) {
+          resetJoystick();
+          pauseForInteraction();
+        }
+      });
+      joystickBase.addEventListener('lostpointercapture', resetJoystick);
+      joystickBase.addEventListener('keydown', event => {
+        const keyInputs = {
+          ArrowUp: [0, 1],
+          ArrowDown: [0, -1],
+          ArrowLeft: [-1, 0],
+          ArrowRight: [1, 0]
+        };
+        if (keyInputs[event.key]) {
+          event.preventDefault();
+          event.stopPropagation();
+          [joystickInput.x, joystickInput.y] = keyInputs[event.key];
+          joystickKnob.style.transform = `translate(calc(-50% + ${joystickInput.x * joystickRadius}px), calc(-50% - ${joystickInput.y * joystickRadius}px))`;
+        }
+      });
+      joystickBase.addEventListener('keyup', event => {
+        if (event.key.startsWith('Arrow')) {
+          event.preventDefault();
+          event.stopPropagation();
+          resetJoystick();
+          pauseForInteraction();
+        }
+      });
+      joystickBase.addEventListener('blur', resetJoystick);
+
+      let dragMode = 'orbit';
+      const pointerPosition = event => ({ x: event.clientX, y: event.clientY });
+      const measureGesture = () => {
+        const [first, second] = Array.from(activePointers.values());
+        const dx = second.x - first.x;
+        const dy = second.y - first.y;
+        return {
+          x: (first.x + second.x) / 2,
+          y: (first.y + second.y) / 2,
+          distance: Math.hypot(dx, dy)
+        };
+      };
+      const panScreenDelta = (deltaX, deltaY) => {
+        const scale = viewDistance / container.clientHeight;
+        camera.updateMatrixWorld();
+        const right = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 0);
+        const up = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 1);
+        viewTarget.addScaledVector(right, -deltaX * scale);
+        viewTarget.addScaledVector(up, deltaY * scale);
+      };
+      container.addEventListener('contextmenu', event => event.preventDefault());
+      container.addEventListener('pointerdown', event => {
+        pauseForInteraction();
+        activePointers.set(event.pointerId, pointerPosition(event));
+        container.setPointerCapture(event.pointerId);
+        container.style.cursor = 'grabbing';
+        if (activePointers.size >= 2) {
+          dragMode = 'touch';
+          previousGesture = measureGesture();
+          isDragging = true;
+          previousPointer = null;
+        } else {
+          dragMode = event.shiftKey || event.button === 1 || event.button === 2 ? 'pan' : 'orbit';
+          previousPointer = pointerPosition(event);
+          previousGesture = null;
+          isDragging = true;
+        }
+      });
+      container.addEventListener('pointermove', event => {
+        if (!activePointers.has(event.pointerId)) return;
+        pauseForInteraction();
+        activePointers.set(event.pointerId, pointerPosition(event));
+        if (activePointers.size >= 2) {
+          const gesture = measureGesture();
+          if (!previousGesture || previousGesture.distance === 0) {
+            previousGesture = gesture;
+            return;
+          }
+          zoomBy(previousGesture.distance / Math.max(gesture.distance, 1));
+          panScreenDelta(gesture.x - previousGesture.x, gesture.y - previousGesture.y);
+          previousGesture = gesture;
+          updateCamera();
+          return;
+        }
+        if (!isDragging || !previousPointer) return;
+        const deltaX = event.clientX - previousPointer.x;
+        const deltaY = event.clientY - previousPointer.y;
+        if (dragMode === 'orbit') {
+          viewTheta -= deltaX * 0.008;
+          viewPhi = THREE.MathUtils.clamp(viewPhi - deltaY * 0.006, 0.08, Math.PI - 0.08);
+        } else {
+          panScreenDelta(deltaX, deltaY);
+        }
+        previousPointer = { x: event.clientX, y: event.clientY };
+        updateCamera();
+      });
+      container.addEventListener('pointerup', event => {
+        activePointers.delete(event.pointerId);
+        if (container.hasPointerCapture(event.pointerId)) container.releasePointerCapture(event.pointerId);
+        if (activePointers.size === 1) {
+          const [, position] = activePointers.entries().next().value;
+          dragMode = 'orbit';
+          previousPointer = position;
+          previousGesture = null;
+          isDragging = true;
+        } else if (activePointers.size === 0) {
+          isDragging = false;
+          previousPointer = null;
+          previousGesture = null;
+          container.style.cursor = 'grab';
+        } else {
+          previousGesture = measureGesture();
+        }
+      });
+      container.addEventListener('pointercancel', event => {
+        activePointers.delete(event.pointerId);
+        isDragging = false;
+        previousPointer = null;
+        previousGesture = null;
+        if (container.hasPointerCapture(event.pointerId)) container.releasePointerCapture(event.pointerId);
+        container.style.cursor = 'grab';
+      });
+      container.addEventListener('wheel', event => {
+        event.preventDefault();
+        pauseForInteraction();
+        const wheelDelta = THREE.MathUtils.clamp(event.deltaY, -120, 120);
+        zoomBy(Math.exp(wheelDelta * 0.00055));
+      }, { passive: false });
+
+      const animationClock = new THREE.Clock();
+      function animate() {
+        requestAnimationFrame(animate);
+
+        const delta = animationClock.getDelta();
+        if (autoRotate && !isDragging) {
+          viewTheta += delta * 0.06;
+        }
+        viewDistance += (targetViewDistance - viewDistance) * (1 - Math.exp(-delta * 4.5));
+        updateCamera();
+        const t = performance.now() * 0.001;
+        const driveForward = Math.abs(joystickInput.y) > 0.04 ? joystickInput.y : 0;
+        const driveSteer = Math.abs(joystickInput.x) > 0.04 ? joystickInput.x : 0;
+        const leftWheelSpeed = driveForward + driveSteer;
+        const rightWheelSpeed = driveForward - driveSteer;
+        wheels.forEach((wheel, index) => {
+          const sideSpeed = wheelPositions[index][2] > 0 ? leftWheelSpeed : rightWheelSpeed;
+          wheel.rotation.z += sideSpeed * delta * 2.8;
+        });
+        if (driveForward || driveSteer) {
+          const distance = driveForward * delta * 1.6;
+          const moveX = -Math.cos(cart.rotation.y) * distance;
+          const moveZ = Math.sin(cart.rotation.y) * distance;
+          cart.position.x += moveX;
+          cart.position.z += moveZ;
+          cart.rotation.y -= driveSteer * delta * 0.9;
+          viewTarget.x += moveX;
+          viewTarget.z += moveZ;
+          updateCamera();
+        }
+        mopHead.rotation.y = t * 2.4;
+        const splashAge = t - splashStartedAt;
+        if (splashAge >= 0 && splashAge < splashDuration) {
+          const position = splashGeometry.attributes.position;
+          for (let i = 0; i < splashCount; i++) {
+            const velocity = splashVelocity[i];
+            position.setXYZ(
+              i,
+              splashOrigin.x + velocity.x * splashAge,
+              Math.max(0.035, splashOrigin.y + velocity.y * splashAge - 1.4 * splashAge * splashAge),
+              splashOrigin.z + velocity.z * splashAge
+            );
+          }
+          position.needsUpdate = true;
+          const progress = splashAge / splashDuration;
+          splashRing.scale.setScalar(0.2 + progress * 1.8);
+          splashRing.material.opacity = (1 - progress) * 0.75;
+        } else if (splashParticles.visible) {
+          splashParticles.visible = false;
+          splashRing.visible = false;
+        }
+        renderer.render(scene, camera);
+      }
+      animate();
+
+      function resizeViewer() {
+        const { clientWidth, clientHeight } = container;
+        renderer.setSize(clientWidth, clientHeight);
+        camera.aspect = clientWidth / clientHeight;
+        cameraFitDistance = initialViewDistance * Math.max(1, 1 / camera.aspect);
+        targetViewDistance = cameraFitDistance * zoomFactor;
+        camera.updateProjectionMatrix();
+      }
+      window.addEventListener('resize', resizeViewer);
+      resizeViewer();
+    </script>
+  </body>
+</html>
